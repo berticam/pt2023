@@ -5,7 +5,7 @@ import { DeleteResult, Repository } from "typeorm";
 import { CreateUserDto } from "./Dto/Create-user.dto";
 import { InternalProvidersStorage } from "@nestjs/core/injector/internal-providers-storage";
 import { UpdateUserDto } from "./Dto/Update-user.dto";
-
+import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UserService {
   constructor(
@@ -17,7 +17,10 @@ export class UserService {
   }
 
   async addUser(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
+    const hashed = await bcrypt.hash(createUserDto.password, 10);
+    const data = { ...createUserDto, password: hashed};
+    console.log(data);
+    const user = this.userRepository.create(data);
     return await this.userRepository.save(user);
   }
 
@@ -25,6 +28,9 @@ export class UserService {
     return this.userRepository.findOneBy({ id });
   }
 
+  async getByEmail(email: string): Promise<User> {
+    return this.userRepository.findOneBy({ email });
+  }
   async deleteUser(id: number): Promise<DeleteResult> {
     return this.userRepository.delete(id);
   }
